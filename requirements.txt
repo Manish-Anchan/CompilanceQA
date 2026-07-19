@@ -21,5 +21,4 @@ requests
 sqlalchemy
 streamlit
 uvicorn
-yt-dlp
-imageio-ffmpeg
+pytubefix
