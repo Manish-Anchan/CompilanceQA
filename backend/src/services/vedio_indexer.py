@@ -55,14 +55,29 @@ class VideoIndexerService:
     }
 
 }
+        cookie_file_path = "temp_cookies.txt"
+        cookies_content = os.getenv("YOUTUBE_COOKIES")
         
         try:
+            if cookies_content:
+                # Safely write cookies to a temporary file
+                with open(cookie_file_path, "w") as f:
+                    f.write(cookies_content.replace("\\n", "\n"))
+                ydl_opts['cookiefile'] = cookie_file_path
+                logger.info("Using YOUTUBE_COOKIES from environment.")
+            else:
+                logger.warning("No YOUTUBE_COOKIES found in environment. Download may fail due to bot detection.")
+
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             logger.info("Download complete.")
             return output_path
         except Exception as e:
             raise Exception(f"YouTube Download Failed: {str(e)}")
+        finally:
+            # Securely delete the temporary cookie file immediately
+            if os.path.exists(cookie_file_path):
+                os.remove(cookie_file_path)
 
 
     def upload_video(self, video_path, video_name):
