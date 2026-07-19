@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)  
 
 from backend.src.api.telemetry import setup_telemetry
-setup_telemetry()  
+# setup_telemetry()  # Temporarily disabled so we can read the actual logs!  
 
 from backend.src.graph.workflow import app as compliance_graph
 

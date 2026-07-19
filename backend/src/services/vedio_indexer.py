@@ -2,7 +2,8 @@ import os
 import time
 import logging
 import requests
-from pytubefix import YouTube
+import yt_dlp
+import imageio_ffmpeg
 from azure.identity import DefaultAzureCredential
 
 logger = logging.getLogger("video-indexer")
@@ -41,23 +42,43 @@ class VideoIndexerService:
         return response.json().get("accessToken")
 
     def download_youtube_video(self, url, output_path="temp_video.mp4"):
-        """Downloads a YouTube video to a local file using pytubefix."""
-        logger.info(f"Downloading YouTube video via pytubefix: {url}")
+        """Downloads a YouTube video to a local file using yt-dlp."""
+        logger.info(f"Downloading YouTube video via yt-dlp: {url}")
+        
+        ydl_opts = {
+            'outtmpl': output_path,
+            'quiet': False,
+            'no_warnings': False,
+            'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe(),
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        }
+        
+        cookie_file_path = "temp_cookies.txt"
+        cookies_content = os.getenv("YOUTUBE_COOKIES")
         
         try:
-            yt = YouTube(url, use_po_token=True)
-            # Grab the highest resolution pre-merged MP4 (usually 720p)
-            stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
+            if cookies_content:
+                # Safely write cookies to a temporary file
+                with open(cookie_file_path, "w") as f:
+                    f.write(cookies_content.replace("\\n", "\n"))
+                ydl_opts['cookiefile'] = cookie_file_path
+                logger.info("Using YOUTUBE_COOKIES from environment.")
+            else:
+                logger.warning("No YOUTUBE_COOKIES found in environment. Download may fail due to bot detection.")
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
             
-            if not stream:
-                raise Exception("No standard MP4 stream available for this video.")
-                
-            stream.download(filename=output_path)
             logger.info("Download complete.")
             return output_path
             
         except Exception as e:
-            raise Exception(f"YouTube Download Failed (pytubefix): {str(e)}")
+            raise Exception(f"YouTube Download Failed (yt-dlp): {str(e)}")
+        finally:
+            if os.path.exists(cookie_file_path):
+                os.remove(cookie_file_path)
 
 
     def upload_video(self, video_path, video_name):
