@@ -3,6 +3,7 @@ import time
 import logging
 import requests
 import yt_dlp  
+import imageio_ffmpeg
 from azure.identity import DefaultAzureCredential
 
 logger = logging.getLogger("video-indexer")
@@ -45,10 +46,10 @@ class VideoIndexerService:
         logger.info(f"Downloading YouTube video: {url}")
         
         ydl_opts = {
-         'format': '18/b',
          'outtmpl': output_path,
          'quiet': False,
          'no_warnings': False,
+         'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe(),
          'http_headers': {
              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
          }
