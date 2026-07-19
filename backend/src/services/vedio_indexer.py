@@ -45,16 +45,14 @@ class VideoIndexerService:
         logger.info(f"Downloading YouTube video: {url}")
         
         ydl_opts = {
-         'format': 'best',
-         'outtmpl': output_path, # output template
+         'format': '18/b',
+         'outtmpl': output_path,
          'quiet': False,
          'no_warnings': False,
-         'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
          'http_headers': {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
-
-}
+             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+         }
+        }
         cookie_file_path = "temp_cookies.txt"
         cookies_content = os.getenv("YOUTUBE_COOKIES")
         
