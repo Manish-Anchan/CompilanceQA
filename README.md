@@ -204,14 +204,6 @@ POST request to:
 ---
 
 
-## 📊 Telemetry & Monitoring
-
-This project uses **Azure Monitor (Application Insights)** to track performance and errors. 
-
-> **Note:** If `APPLICATIONINSIGHTS_CONNECTION_STRING` is set in your `.env` file, the Azure SDK will automatically send background telemetry pings to Azure. This may result in highly verbose HTTP logs appearing in your backend terminal (e.g., `INFO:azure.core.pipeline.policies.http_logging_policy`). This is normal behavior and indicates that monitoring is active.
-
----
-
 ## 📌 Notes
 
 - Ensure Azure AI Search index dimensions match embedding model (1536 for text-embedding-3-small).

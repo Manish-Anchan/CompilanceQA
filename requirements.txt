@@ -21,3 +21,4 @@ requests
 sqlalchemy
 streamlit
 uvicorn
+yt-dlp

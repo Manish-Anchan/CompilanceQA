@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import requests
+import yt_dlp  
 from azure.identity import DefaultAzureCredential
 
 logger = logging.getLogger("video-indexer")
@@ -40,62 +41,28 @@ class VideoIndexerService:
         return response.json().get("accessToken")
 
     def download_youtube_video(self, url, output_path="temp_video.mp4"):
-        """Downloads a YouTube video using a RapidAPI proxy to bypass bot detection."""
-        logger.info(f"Downloading YouTube video via RapidAPI proxy: {url}")
+        """Downloads a YouTube video to a local file."""
+        logger.info(f"Downloading YouTube video: {url}")
+        
+        ydl_opts = {
+         'format': 'best',
+         'outtmpl': output_path, # output template
+         'quiet': False,
+         'no_warnings': False,
+         'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+         'http_headers': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+
+}
         
         try:
-            # Extract video ID from URL
-            if "youtu.be/" in url:
-                video_id = url.split("youtu.be/")[1].split("?")[0]
-            elif "v=" in url:
-                video_id = url.split("v=")[1].split("&")[0]
-            else:
-                raise Exception("Invalid YouTube URL format. Could not extract video ID.")
-                
-            api_url = "https://ytstream-download-youtube-videos.p.rapidapi.com/dl"
-            querystring = {"id": video_id}
-            
-            headers = {
-                'x-rapidapi-key': os.getenv("RAPIDAPI_KEY"),
-                'x-rapidapi-host': "ytstream-download-youtube-videos.p.rapidapi.com",
-                'Content-Type': "application/json"
-            }
-            
-            logger.info(f"Requesting download links from RapidAPI for video ID: {video_id}")
-            response = requests.get(api_url, headers=headers, params=querystring)
-            
-            if response.status_code != 200:
-                raise Exception(f"RapidAPI failed: {response.text}")
-                
-            data = response.json()
-            
-            # Find the best pre-merged MP4 format (usually format 18)
-            download_url = None
-            if "formats" in data:
-                for fmt in data["formats"]:
-                    if "mp4" in fmt.get("mimeType", "").lower():
-                        download_url = fmt.get("url")
-                        break
-            
-            if not download_url:
-                raise Exception("No standard MP4 stream found in RapidAPI response.")
-                
-            # Download the actual MP4 file to disk
-            logger.info("Downloading raw MP4 stream to disk...")
-            video_response = requests.get(download_url, stream=True)
-            if video_response.status_code != 200:
-                raise Exception(f"Failed to download MP4 stream: HTTP {video_response.status_code}")
-                
-            with open(output_path, 'wb') as f:
-                for chunk in video_response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-                        
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
             logger.info("Download complete.")
             return output_path
-            
         except Exception as e:
-            raise Exception(f"YouTube Download Failed (RapidAPI): {str(e)}")
+            raise Exception(f"YouTube Download Failed: {str(e)}")
 
 
     def upload_video(self, video_path, video_name):

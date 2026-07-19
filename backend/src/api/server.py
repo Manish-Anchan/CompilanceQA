@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)  
 
 from backend.src.api.telemetry import setup_telemetry
-# setup_telemetry()  # Temporarily disabled so we can read the actual logs!  
+setup_telemetry()  
 
 from backend.src.graph.workflow import app as compliance_graph
 
@@ -43,7 +43,6 @@ class AuditResponse(BaseModel):
     status: str                          
     final_report: str                    
     compliance_results: List[ComplianceIssue] 
-    errors: List[str] = [] 
 
 
 @app.post("/audit", response_model=AuditResponse)
@@ -69,8 +68,7 @@ async def audit_video(request: AuditRequest):
             video_id=final_state.get("video_id"),  
             status=final_state.get("final_status", "UNKNOWN"),  
             final_report=final_state.get("final_report", "No report generated."),
-            compliance_results=final_state.get("compliance_results", []),
-            errors=final_state.get("errors", [])
+            compliance_results=final_state.get("compliance_results", [])
         )
     
     except Exception as e:
