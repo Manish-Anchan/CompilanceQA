@@ -43,6 +43,7 @@ class AuditResponse(BaseModel):
     status: str                          
     final_report: str                    
     compliance_results: List[ComplianceIssue] 
+    errors: List[str] = [] 
 
 
 @app.post("/audit", response_model=AuditResponse)
@@ -68,7 +69,8 @@ async def audit_video(request: AuditRequest):
             video_id=final_state.get("video_id"),  
             status=final_state.get("final_status", "UNKNOWN"),  
             final_report=final_state.get("final_report", "No report generated."),
-            compliance_results=final_state.get("compliance_results", [])
+            compliance_results=final_state.get("compliance_results", []),
+            errors=final_state.get("errors", [])
         )
     
     except Exception as e:

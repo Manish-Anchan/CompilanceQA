@@ -8,3 +8,4 @@ wheels/
 
 .venv
 .env
+.python-version
