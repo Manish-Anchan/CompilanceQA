@@ -2,10 +2,10 @@ import operator
 from typing import Annotated, List, Dict, Optional, Any, TypedDict
 
 class ComplianceIssue(TypedDict):
-    category: str           # e.g., "FTC_DISCLOSURE"
-    description: str        # Specific detail of the violation
-    severity: str           # "CRITICAL" | "WARNING"
-    timestamp: Optional[str]# Timestamp of occurrence (if applicable)
+    category: str           
+    description: str       
+    severity: str         
+    timestamp: Optional[str]
 
 class VideoAuditState(TypedDict):
     """

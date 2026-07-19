@@ -23,7 +23,7 @@ app = FastAPI(
 )
 
 class AuditRequest(BaseModel):
-    video_url: str  # Required string field
+    video_url: str  
 
 
 
@@ -33,17 +33,16 @@ class ComplianceIssue(BaseModel):
     
     Used inside AuditResponse to represent each violation found.
     """
-    category: str      # Example: "Misleading Claims"
-    severity: str      # Example: "CRITICAL"
-    description: str   # Example: "Absolute guarantee detected at 00:32"
-
+    category: str    
+    severity: str     
+    description: str   
 
 class AuditResponse(BaseModel):
-    session_id: str                           # Unique audit session ID
-    video_id: str                             # Shortened video identifier
-    status: str                               # PASS or FAIL
-    final_report: str                         # AI-generated summary
-    compliance_results: List[ComplianceIssue] # List of violations (can be empty)
+    session_id: str                         
+    video_id: str                            
+    status: str                          
+    final_report: str                    
+    compliance_results: List[ComplianceIssue] 
 
 
 @app.post("/audit", response_model=AuditResponse)
@@ -56,10 +55,10 @@ async def audit_video(request: AuditRequest):
     video_id_short = f"vid_{session_id[:8]}"  
     logger.info(f"Received Audit Request: {request.video_url} (Session: {session_id})")
     initial_inputs = {
-        "video_url": request.video_url,  # From the API request
-        "video_id": video_id_short,      # Generated ID
-        "compliance_results": [],        # Will be populated by Auditor
-        "errors": []                     # Tracks any processing errors
+        "video_url": request.video_url,  
+        "video_id": video_id_short,     
+        "compliance_results": [],        
+        "errors": []                  
     }
 
     try:

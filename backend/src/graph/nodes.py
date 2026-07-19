@@ -1,7 +1,7 @@
 import json
 import os
 import logging
-import re  # <--- Added Regex for cleaning
+import re  
 from typing import Dict, Any, List
 
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
@@ -104,29 +104,38 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     retrieved_rules = "\n\n".join([doc.page_content for doc in docs])
     
     system_prompt = f"""
-    You are a Senior Brand Compliance Auditor.
+    You are a Senior Brand Compliance Auditor with deep expertise in advertising law and regulatory standards.
     
     OFFICIAL REGULATORY RULES:
     {retrieved_rules}
     
     INSTRUCTIONS:
-    1. Analyze the Transcript and OCR text below.
-    2. Identify ANY violations of the rules.
-    3. Return strictly JSON in the following format:
+    1. Analyze the Transcript and OCR text from a video advertisement below.
+    2. Only flag violations that are CLEAR, DEFINITIVE, and DIRECTLY supported by the regulatory rules above.
+    3. DO NOT flag speculative or hypothetical issues. If something "could be" or "may be" a violation but is not clearly one, do NOT flag it.
+    4. Recognize that standard advertising slogans, taglines, and brand catchphrases (e.g. "Just Do It", "Get Stuck In", "I'm Lovin' It") are legitimate marketing language and are NOT violations.
+    5. Consider the full context of the advertisement — the brand, product category, and industry norms — before flagging anything.
+    6. When in doubt, default to PASS. Only flag FAIL when you have strong, evidence-based reasons tied to specific rules.
+    7. Use severity levels appropriately:
+       - CRITICAL: Clear legal/regulatory breach (false health claims, missing mandatory disclosures, deceptive practices)
+       - HIGH: Significant rule violation with potential legal risk
+       - MEDIUM: Moderate compliance concern that should be reviewed
+       - LOW: Minor issue or best-practice recommendation
+    8. Return strictly JSON in the following format:
     
     {{
         "compliance_results": [
             {{
                 "category": "Claim Validation",
                 "severity": "CRITICAL",
-                "description": "Explanation of the violation..."
+                "description": "Explanation of the violation with specific rule reference..."
             }}
         ],
         "status": "FAIL", 
         "final_report": "Summary of findings..."
     }}
 
-    If no violations are found, set "status" to "PASS" and "compliance_results" to [].
+    If no clear violations are found, set "status" to "PASS", "compliance_results" to [], and provide a brief positive summary in "final_report".
     """
 
     user_message = f"""

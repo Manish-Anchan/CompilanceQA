@@ -34,6 +34,9 @@ YouTube URL
 
 ## 🧠 Tech Stack
 
+**Frontend Framework**
+- Streamlit
+
 **Backend Framework**
 - FastAPI
 - Uvicorn
@@ -66,6 +69,7 @@ YouTube URL
 │   │   └── services
 │   ├── data
 │   └── scripts
+├── app.py
 ├── main.py
 ├── requirements.txt
 ├── pyproject.toml
@@ -131,16 +135,34 @@ pip install -r requirements.txt
 
 ---
 
-## ▶ Running the API Server
+## ▶ Running the Application
 
+### Option 1: Streamlit Frontend (UI)
+
+Run the interactive web interface:
+
+```bash
+streamlit run app.py
 ```
+
+The UI will be available at `http://localhost:8501`.
+
+### Option 2: FastAPI Backend (API Server)
+
+Run the REST API server:
+
+```bash
 uvicorn backend.src.api.server:app --reload
 ```
 
-Server will run at:
+Server will run at `http://127.0.0.1:8000`.
 
-```
-http://127.0.0.1:8000
+### Option 3: CLI Simulation
+
+Run a test simulation directly from the terminal:
+
+```bash
+python main.py
 ```
 
 ---
@@ -181,6 +203,14 @@ POST request to:
 
 ---
 
+
+## 📊 Telemetry & Monitoring
+
+This project uses **Azure Monitor (Application Insights)** to track performance and errors. 
+
+> **Note:** If `APPLICATIONINSIGHTS_CONNECTION_STRING` is set in your `.env` file, the Azure SDK will automatically send background telemetry pings to Azure. This may result in highly verbose HTTP logs appearing in your backend terminal (e.g., `INFO:azure.core.pipeline.policies.http_logging_policy`). This is normal behavior and indicates that monitoring is active.
+
+---
 
 ## 📌 Notes
 
