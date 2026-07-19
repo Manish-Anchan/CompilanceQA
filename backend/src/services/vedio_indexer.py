@@ -46,6 +46,7 @@ class VideoIndexerService:
         logger.info(f"Downloading YouTube video: {url}")
         
         ydl_opts = {
+         'format': 'b',
          'outtmpl': output_path,
          'quiet': False,
          'no_warnings': False,
