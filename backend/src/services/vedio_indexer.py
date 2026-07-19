@@ -2,8 +2,6 @@ import os
 import time
 import logging
 import requests
-import yt_dlp
-import imageio_ffmpeg
 from azure.identity import DefaultAzureCredential
 
 logger = logging.getLogger("video-indexer")
@@ -42,43 +40,62 @@ class VideoIndexerService:
         return response.json().get("accessToken")
 
     def download_youtube_video(self, url, output_path="temp_video.mp4"):
-        """Downloads a YouTube video to a local file using yt-dlp."""
-        logger.info(f"Downloading YouTube video via yt-dlp: {url}")
-        
-        ydl_opts = {
-            'outtmpl': output_path,
-            'quiet': False,
-            'no_warnings': False,
-            'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe(),
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        }
-        
-        cookie_file_path = "temp_cookies.txt"
-        cookies_content = os.getenv("YOUTUBE_COOKIES")
+        """Downloads a YouTube video using a RapidAPI proxy to bypass bot detection."""
+        logger.info(f"Downloading YouTube video via RapidAPI proxy: {url}")
         
         try:
-            if cookies_content:
-                # Safely write cookies to a temporary file
-                with open(cookie_file_path, "w") as f:
-                    f.write(cookies_content.replace("\\n", "\n"))
-                ydl_opts['cookiefile'] = cookie_file_path
-                logger.info("Using YOUTUBE_COOKIES from environment.")
+            # Extract video ID from URL
+            if "youtu.be/" in url:
+                video_id = url.split("youtu.be/")[1].split("?")[0]
+            elif "v=" in url:
+                video_id = url.split("v=")[1].split("&")[0]
             else:
-                logger.warning("No YOUTUBE_COOKIES found in environment. Download may fail due to bot detection.")
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
+                raise Exception("Invalid YouTube URL format. Could not extract video ID.")
+                
+            api_url = "https://ytstream-download-youtube-videos.p.rapidapi.com/dl"
+            querystring = {"id": video_id}
             
+            headers = {
+                'x-rapidapi-key': os.getenv("RAPIDAPI_KEY"),
+                'x-rapidapi-host': "ytstream-download-youtube-videos.p.rapidapi.com",
+                'Content-Type': "application/json"
+            }
+            
+            logger.info(f"Requesting download links from RapidAPI for video ID: {video_id}")
+            response = requests.get(api_url, headers=headers, params=querystring)
+            
+            if response.status_code != 200:
+                raise Exception(f"RapidAPI failed: {response.text}")
+                
+            data = response.json()
+            
+            # Find the best pre-merged MP4 format (usually format 18)
+            download_url = None
+            if "formats" in data:
+                for fmt in data["formats"]:
+                    if "mp4" in fmt.get("mimeType", "").lower():
+                        download_url = fmt.get("url")
+                        break
+            
+            if not download_url:
+                raise Exception("No standard MP4 stream found in RapidAPI response.")
+                
+            # Download the actual MP4 file to disk
+            logger.info("Downloading raw MP4 stream to disk...")
+            video_response = requests.get(download_url, stream=True)
+            if video_response.status_code != 200:
+                raise Exception(f"Failed to download MP4 stream: HTTP {video_response.status_code}")
+                
+            with open(output_path, 'wb') as f:
+                for chunk in video_response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        
             logger.info("Download complete.")
             return output_path
             
         except Exception as e:
-            raise Exception(f"YouTube Download Failed (yt-dlp): {str(e)}")
-        finally:
-            if os.path.exists(cookie_file_path):
-                os.remove(cookie_file_path)
+            raise Exception(f"YouTube Download Failed (RapidAPI): {str(e)}")
 
 
     def upload_video(self, video_path, video_name):
